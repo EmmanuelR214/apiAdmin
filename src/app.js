@@ -5,11 +5,7 @@ import indexRoutes from './routers/admin.routes.js'
 
 const app = express()
 
-app.use(cors({
-    origin: 'http://amdin.labarbada.store/',
-    // origin: 'http://localhost:5173',
-    credentials: true
-}));
+app.use(cors());
 app.use(express.json())
 app.use(cookieParser())
 
