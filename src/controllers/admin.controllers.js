@@ -23,6 +23,18 @@ const hashData = async (data) => {
   }
 }
 
+export const getMenuPorNombre = async(req, res) =>{
+  try {
+    const {nombre } = req.query
+    console.log(nombre)
+    const [[result]] = await Coonexion.execute('CALL ObtenerListaPlatillosNombre(?)', [nombre])
+    console.log(result)
+    res.status(200).json({platillos: result})
+  } catch (error) {
+    res.status(500).json(['Error al filtrar el menú por nombre'])
+  }
+}
+
 export const GetDatos = async(req, res) => {
   try {
     const [[user]] = await Coonexion.execute('CALL ObtenerUsuarios()')
@@ -48,6 +60,16 @@ export const GetDatos = async(req, res) => {
     res.status(200).json({countUser, pendientes, noPendientes, totalVentasMesActual, reporte, user, platillos})
   } catch (error) {
     res.status(500).json(['Error al traer datos'])
+  }
+}
+
+export const EliminarPlatillo = async(req, res) => {
+  try {
+    const {id} = req.params
+    await Coonexion.execute('CALL EliminarPlatillo(?)', [id])
+    res.status(200).json(['Platillo eliminado'])
+  } catch (error) {
+    res.status(500).json(['Error al eliminar platillo'])
   }
 }
 
@@ -99,23 +121,6 @@ export const InsertPlatillo = async (req, res) => {
   }
 }
 
-export const EliminarPlatillo = async(req, res) => {
-  try {
-    const { id } = req.body;
-    console.log(id);
-    const [[result]] = await Coonexion.execute('CALL Eliminar_platillo(?)', [id]);
-    console.log(result);
-    if (result.affectedRows > 0) {
-      res.status(200).json({ message: 'Platillo Eliminado y Movido a Eliminados' });
-    } else {
-      res.status(404).json({ error: 'Platillo no encontrado' });
-    }
-  } catch (error) {
-    console.log(error);
-    res.status(500).json(['Error al eliminar el platillo']);
-  }
-}
-
 export const TraerDatosPlatilloActualizar = async(req, res) =>{
   try {
     const {id} = req.params
@@ -124,10 +129,9 @@ export const TraerDatosPlatilloActualizar = async(req, res) =>{
     const resultado = {
       platillo: rows[0][0], 
       combinaciones: rows[1],
-      recomendaciones: rows[2] 
+      recomendaciones: rows[2],
+      estados: rows[3]
     }
-    
-    
     res.status(200).json([resultado])
   } catch (error) {
     console.log(error)
@@ -135,6 +139,18 @@ export const TraerDatosPlatilloActualizar = async(req, res) =>{
   }
 }
 
+export const ActualizarPlatillo = async(req, res) =>{
+  try {
+    const { id } = req.params;
+    const { nombre, descripcion, estado, disponible, imagen, combinaciones} = req.body
+    console.log(id, nombre, descripcion, estado, disponible, imagen, combinaciones)
+    await Coonexion.execute('CALL actualizar_platillo(?, ?, ?, ?, ?, ?, ?)', [id, nombre, descripcion, estado.value, disponible.value, imagen, JSON.stringify(combinaciones)])
+    res.status(200).json(['Platillo actualizado'])
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(['Error al actualizar'])
+  }
+}
 
 export const LoginAdmin = async(req, res) =>{
   try {
@@ -189,7 +205,7 @@ export const sendNotificationsPrediction = async(req, res) =>{
       py.stdout.on('data', (data) => {
           result += data.toString();
       });
-      py.stdout.on('end', async () => {
+      py.stdout.on('end', async () => { 
         try {
           const cluster = JSON.parse(result).cluster;
           await updateUserCluster(user.id_usuario, cluster);
