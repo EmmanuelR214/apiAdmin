@@ -103,6 +103,15 @@ export const getMenuPorCategoria = async(req, res) =>{
   }
 }
 
+export const TraerUsuarios = async(req, res) =>{
+  try {
+    const [rows] = await Coonexion.execute('SELECT * FROM vista_usuarios_cliente')
+    res.status(200).json(rows)
+  } catch (error) {
+    res.status(500).json(['Error al traer los usuarios'])
+  }
+}
+
 export const TraerDatosPlatillo = async(req, res) =>{
   try {
     const [[Tamaños]] =  await Coonexion.execute('CALL ObtenerTamaños()')
