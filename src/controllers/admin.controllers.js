@@ -73,6 +73,36 @@ export const EliminarPlatillo = async(req, res) => {
   }
 }
 
+export const GenerarReportes = async(req, res) => {
+  try {
+    const [rows] = await Coonexion.execute('SELECT * FROM vista_reporte_ventas_simplificada')
+    console.log(rows)
+    res.status(200).json(rows)
+  } catch (error) {
+    res.status(500).json(['Error al generar reportes'])
+  }
+}
+
+export const getCategorias = async (req, res) => {
+  try {
+    const [[category]] = await Coonexion.execute('CALL ObtenerCategorias()')
+    res.status(200).json(category)
+  } catch (error) {
+    res.status(500).json(['Error al obtener las categorías'])
+  }
+}
+
+export const getMenuPorCategoria = async(req, res) =>{
+  try {
+    const { categoriaId } = req.params
+    const [[result]] = await Coonexion.execute('CALL ObtenerMenuPorCategoria(?)', [categoriaId])
+    res.status(200).json([result])
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(['Error al filtrar el menú'])	
+  }
+}
+
 export const TraerDatosPlatillo = async(req, res) =>{
   try {
     const [[Tamaños]] =  await Coonexion.execute('CALL ObtenerTamaños()')

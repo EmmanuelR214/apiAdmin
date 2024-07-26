@@ -1,7 +1,7 @@
 import {Router} from 'express'
 import {validateSchema} from '../middlewares/validator.middleware.js'
 import { LoginSchema } from '../schemas/auth.schema.js'
-import { ActualizarPlatillo, EliminarPlatillo, GetDatos, getMenuPorNombre, InsertPlatillo, LoginAdmin, sendNotificationsPrediction, TraerDatosPlatillo, TraerDatosPlatilloActualizar } from '../controllers/admin.controllers.js'
+import { ActualizarPlatillo, EliminarPlatillo, GenerarReportes, getCategorias, GetDatos, getMenuPorNombre, InsertPlatillo, LoginAdmin, sendNotificationsPrediction, TraerDatosPlatillo, TraerDatosPlatilloActualizar } from '../controllers/admin.controllers.js'
 
 const router = Router()
 
@@ -20,6 +20,10 @@ router.patch('/actualizar-platillo/:id', ActualizarPlatillo)
 router.delete('/delete-platillo/:id', EliminarPlatillo)
 
 router.get('/menu-nombre', getMenuPorNombre)
+
+router.get('/reportes', GenerarReportes)
+
+router.get('/categiras', getCategorias)
 
 //---------------predictions-----------------
 router.post('/send-notifications-predictions', sendNotificationsPrediction)
