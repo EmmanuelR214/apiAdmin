@@ -1,5 +1,6 @@
 import { Coonexion } from "../db.js";
 import jwt from 'jsonwebtoken';
+import axios from "axios";
 import bcrypt from 'bcrypt';
 import { CreateAccessToken } from "../libs/jwt.js";
 import { spawn } from 'child_process';
@@ -233,6 +234,39 @@ const getNotification = async (cluster) => {
   return notification;
 }
 
+export const sendNotificationsPrediction = async(req, res) => {
+  try {
+    console.log('Iniciando proceso de envío de notificaciones...');
+    const users = await getUserData();
+    const predictScriptUrl = 'https://barbadapredict.onrender.com/'; // URL de tu endpoint de predicción
+
+    const notifications = [];
+
+    for (const user of users) {
+      try {
+        const response = await axios.post(predictScriptUrl, user);
+        const cluster = response.data.cluster;
+
+        await updateUserCluster(user.id_usuario, cluster);
+        const notification = await getNotification(cluster);
+        await RecommendationMail(user.correo, notification);
+
+        notifications.push({ user: user.id_usuario, status: 'sent' });
+      } catch (err) {
+        console.log(err)
+        console.error(`Error al procesar resultados para el usuario ${user.id_usuario}: ${err}`);
+        notifications.push({ user: user.id_usuario, status: 'failed' });
+      }
+    }
+
+    res.status(200).json(notifications);
+  } catch (error) {
+    console.error(`Error al enviar notificaciones: ${error}`);
+    res.status(500).json(['Error al enviar notificaciones']);
+  }
+};
+
+/*
 export const sendNotificationsPrediction = async(req, res) =>{
   try {
     const users = await getUserData()
@@ -266,3 +300,5 @@ export const sendNotificationsPrediction = async(req, res) =>{
     res.status(500).json(['Error al enviar notificaciones'])
   }
 }
+*/
+

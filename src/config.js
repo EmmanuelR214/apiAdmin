@@ -2,7 +2,7 @@ import { config } from "dotenv";
 
 config()
 
-export const PORT = process.env.PORT || 3000
+export const PORT = process.env.PORT || 3002
 
 export const DBHOST = process.env.DB_HOST || 'localhost'
 export const DBPORT = process.env.DB_PORT || 3306
