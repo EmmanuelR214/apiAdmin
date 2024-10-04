@@ -22,6 +22,7 @@
     "mysql2": "^3.6.2",
     "nodemailer": "^6.9.12",
     "uuid": "^9.0.1",
+    "web-push": "^3.6.7",
     "zod": "^3.22.4"
   },
   "devDependencies": {

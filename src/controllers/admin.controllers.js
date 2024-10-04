@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import { CreateAccessToken } from "../libs/jwt.js";
 import { spawn } from 'child_process';
 import { RecommendationMail } from "../middlewares/authMail.js";
+import { Notificar } from "../middlewares/notification.js";
 
 const TokenSecret = process.env.TOKEN_SECRET
 
@@ -183,8 +184,11 @@ export const ActualizarPlatillo = async(req, res) =>{
   try {
     const { id } = req.params;
     const { nombre, descripcion, estado, disponible, imagen, combinaciones} = req.body
-    console.log(id, nombre, descripcion, estado, disponible, imagen, combinaciones)
+    // console.log(id, nombre, descripcion, estado, disponible, imagen, combinaciones)
     await Coonexion.execute('CALL actualizar_platillo(?, ?, ?, ?, ?, ?, ?)', [id, nombre, descripcion, estado.value, disponible.value, imagen, JSON.stringify(combinaciones)])
+    if(estado.value === 2){
+      await Notificar('!Nueva oferta disponible!', `${nombre} ahora esta en oferta`)
+    }
     res.status(200).json(['Platillo actualizado'])
   } catch (error) {
     console.log(error)
