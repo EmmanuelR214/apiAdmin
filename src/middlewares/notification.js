@@ -35,8 +35,9 @@ export const Notificar = async (title, body) => {
       title: title,
       body: body,
     }
+    console.log(notificacionPayload)
     const [suscripciones] = await Coonexion.query('SELECT * FROM suscripciones')
-    
+    console.log(suscripciones)
     const promises = suscripciones.map((suscripcion) =>
       webPush.sendNotification(
         {
@@ -47,9 +48,14 @@ export const Notificar = async (title, body) => {
           },
         },
         JSON.stringify(notificacionPayload)
-      )
+      ).catch((error) => {
+        console.error('Error al enviar notificación:', error);
+      })
     );
+    
+    console.log(promises)
     await Promise.all(promises);
+    console.log('Notificaciones enviadas.')
     return ['Notificaciones enviadas.'];
   } catch (error) {
     console.log(error)
