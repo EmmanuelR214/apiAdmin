@@ -1,64 +1,42 @@
-import pkg  from "web-push";
 import { Coonexion } from "../db.js";
-const webPush = pkg
-
-const validKeys = webPush.generateVAPIDKeys();
-
-webPush.setVapidDetails(
-  "mailto:labarbada23@gmail.com",
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-)
-
-// Ruta para recibir y almacenar la suscripción en la base de datos
-export const Subscribe = async (req, res) => {
-  try {
-    const { subscription } = req.body;
-    console.log(subscription)
-    const {endpoint, keys} = subscription
-    
-    const p256dh = keys.p256dh;
-    const auth = keys.auth;
-    
-    await Coonexion.execute(`INSERT INTO suscripciones (endpoint, p256dh, auth) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE p256dh = ?, auth = ?`, [endpoint, p256dh, auth, p256dh, auth])
-    
-    res.status(201).json(['Suscripción guardada en la base de datos.']);
-  } catch (error) {
-    console.log(error)
-    res.status(500).json(['Error al guardar la suscripción.']);
-  }
-}
+import webPush from "../libs/web-push.js";
 
 export const Notificar = async (title, body) => {
   try {
     const notificacionPayload = {
       title: title,
       body: body,
-    }
-    console.log(notificacionPayload)
-    const [suscripciones] = await Coonexion.query('SELECT * FROM suscripciones')
-    console.log(suscripciones)
-    const promises = suscripciones.map((suscripcion) =>
-      webPush.sendNotification(
-        {
-          endpoint: suscripcion.endpoint,
-          keys: {
-            p256dh: suscripcion.p256dh,
-            auth: suscripcion.auth,
+    };
+    // Obtiene todas las suscripciones de la base de datos
+    const [suscripciones] = await Coonexion.query('SELECT * FROM suscripciones');
+    // Define el tamaño del lote (puedes ajustar según las necesidades)
+    const chunkSize = 10;
+    // Función para procesar las notificaciones en lotes
+    const processChunk = async (chunk) => {
+      const promises = chunk.map((suscripcion) => 
+        webPush.sendNotification(
+          {
+            endpoint: suscripcion.endpoint,
+            keys: {
+              p256dh: suscripcion.p256dh,
+              auth: suscripcion.auth,
+            },
           },
-        },
-        JSON.stringify(notificacionPayload)
-      ).catch((error) => {
-        console.error('Error al enviar notificación:', error);
-      })
-    );
-    
-    console.log(promises)
-    await Promise.all(promises);
-    console.log('Notificaciones enviadas.')
+          JSON.stringify(notificacionPayload)
+        ).catch(error => {
+          console.error('Error al enviar la notificación a:', suscripcion.endpoint, error);
+        })
+      );
+      await Promise.all(promises);
+    };
+    // Itera sobre las suscripciones en bloques (chunks)
+    for (let i = 0; i < suscripciones.length; i += chunkSize) {
+      const chunk = suscripciones.slice(i, i + chunkSize);
+      await processChunk(chunk);
+    }
     return ['Notificaciones enviadas.'];
   } catch (error) {
-    console.log(error)
-    return ['Error al notificar.'];
+    console.log('Error al enviar las notificaciones:', error);
+    return ['Error al notificar.', error];
   }
-} 
+};
